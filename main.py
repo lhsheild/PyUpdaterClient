@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -12,7 +13,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.init_ui()
-        self.my_ftp = ftp_helper.MyFtp()
 
         self.project_name = 'Qt_UI_25'
         self.project_path = 'C:/WX_Project'
@@ -100,23 +100,30 @@ class MainWindow(QMainWindow):
         painter.drawPixmap(0, 0, 1280, 720, QPixmap("resources\世界地图.jpg"))
         painter.end()
 
+    """检查更新服务器"""
     def check_update(self):
-        update_pack_path = os.path.join(project_path, 'update')
-        update_pack_path = os.path.abspath(update_pack_path)
+        self.my_check_update = Update_Helper.Check_Update(self.project_name, self.project_path)
+        self.my_check_update.signal_server_empty.connect(self.check_update_empty)
+        self.my_check_update.signal_already_down.connect(self.check_update_already)
+        self.my_check_update.signal_server_out.connect(self.check_update_fail)
+        self.my_check_update.signal_downpack.connect(self.check_update_down)
+        self.my_check_update.start()
 
-        if self.my_ftp.ftp_login() == 1000:
-            self.findChild(QLabel, 'label').setText('已连接服务器，正在查询更新信息')
-            file_list = self.my_ftp.ftp_getfiles()
-            for i in file_list:
-                if self.project_name not in i:
-                    file_list.remove(i)
-            file_list.sort()
-            file_list.append('Qt_UI_25_1542159836.3973486.zip')
-            file_list.sort()
-            print(file_list.index('Qt_UI_25_1542159836.3973486.zip'))
-            print('list:', file_list)
-        else:
-            self.findChild(QLabel, 'label').setText('无法连接服务器，请连续管理员')
+    @pyqtSlot()
+    def check_update_empty(self):
+        self.findChild(QLabel, 'label').setText('服务器没有对应更新包')
+
+    @pyqtSlot()
+    def check_update_already(self):
+        self.findChild(QLabel, 'label').setText('本地更新包已为最新版本')
+
+    @pyqtSlot()
+    def check_update_fail(self):
+        self.findChild(QLabel, 'label').setText('服务器连接失败')
+
+    @pyqtSlot(str)
+    def check_update_down(self, pack):
+        self.findChild(QLabel, 'label').setText('更新包：{} 下载完成'.format(pack))
 
 
 if __name__ == '__main__':
@@ -129,41 +136,17 @@ if __name__ == '__main__':
     #
     # sys.exit(app.exec_())
 
-    project_name = 'Qt_UI_25'
-    project_path = 'C:/WX_Project'
-    temp_path = os.path.join(project_path, 'temp')
-    update_pack_path = os.path.join(project_path, 'update')
-    update_pack_path = os.path.abspath(update_pack_path)
-    if not os.listdir(update_pack_path):
-        print('empty')
-        my_ftp = ftp_helper.MyFtp()
-        if my_ftp.ftp_login() == 1000:
-            file_list = my_ftp.ftp_getfiles()
-            for i in file_list:
-                if project_name not in i:
-                    file_list.remove(i)
-            file_list.sort()
-            update_pack = file_list[0]
-            my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack)))
-    else:
-        print('not empty')
-        version_list = []
-        for i in os.listdir(update_pack_path):
-            version_list.append(i)
+    # project = 'Qt_UI_25'
+    # file = r'C:\WX_Project\update\Qt_UI_25_1542159836.3973486\Qt_UI_25_update.json'
+    # with open(file, 'r') as f:
+    #     j = f.read()
+    #     d = json.loads(j)
+    #
+    # for i in d:
+    #     print('i:', i)
+    #     print(i.split(':')[-1])
+    #     print(i.split('\\'+project+'\\')[-1])
 
-        version = version_list[-1]
-
-        my_ftp = ftp_helper.MyFtp()
-        if my_ftp.ftp_login() == 1000:
-            file_list = my_ftp.ftp_getfiles()
-            for i in file_list:
-                if project_name not in i:
-                    file_list.remove(i)
-            file_list.sort()
-            temp = file_list.index(version)
-            if file_list[temp] == file_list[-1]:
-                print('没有新的更新包')
-            else:
-                update_pack = file_list[temp + 1]
-                if my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack))) == 1000:
-                    print('更新包已下载')
+    # folder = r'D:\Project\UnigineProjects\Qt_UI_25\data\Qt_UI_25\meshes'
+    folder = r'D:\Project\UnigineProjects\Qt_UI_25\data'
+    print(folder.split('\\' + 'Qt_UI_25' + '\\'))
