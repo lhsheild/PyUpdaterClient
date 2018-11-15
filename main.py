@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from tools import ftp_helper
+from tools import ftp_helper, Update_Helper
 
 
 class MainWindow(QMainWindow):
@@ -16,7 +16,6 @@ class MainWindow(QMainWindow):
 
         self.project_name = 'Qt_UI_25'
         self.project_path = 'C:/WX_Project'
-        self.update_pack_path = os.path.join(self.project_path, 'update')
 
         """功能函数"""
         self.check_update()
@@ -101,10 +100,10 @@ class MainWindow(QMainWindow):
         painter.drawPixmap(0, 0, 1280, 720, QPixmap("resources\世界地图.jpg"))
         painter.end()
 
-    def closeEvent(self, event):
-        sys.exit(app.exec_())
-
     def check_update(self):
+        update_pack_path = os.path.join(project_path, 'update')
+        update_pack_path = os.path.abspath(update_pack_path)
+
         if self.my_ftp.ftp_login() == 1000:
             self.findChild(QLabel, 'label').setText('已连接服务器，正在查询更新信息')
             file_list = self.my_ftp.ftp_getfiles()
@@ -148,8 +147,11 @@ if __name__ == '__main__':
             my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack)))
     else:
         print('not empty')
+        version_list = []
         for i in os.listdir(update_pack_path):
-            old_version_pack = i
+            version_list.append(i)
+
+        version = version_list[-1]
 
         my_ftp = ftp_helper.MyFtp()
         if my_ftp.ftp_login() == 1000:
@@ -157,8 +159,11 @@ if __name__ == '__main__':
             for i in file_list:
                 if project_name not in i:
                     file_list.remove(i)
-            file_list.remove(old_version_pack)
             file_list.sort()
-            update_pack = file_list[0]
-            if my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack))) == 1000:
-                os.remove(os.path.join(update_pack_path, old_version_pack))
+            temp = file_list.index(version)
+            if file_list[temp] == file_list[-1]:
+                print('没有新的更新包')
+            else:
+                update_pack = file_list[temp + 1]
+                if my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack))) == 1000:
+                    print('更新包已下载')
