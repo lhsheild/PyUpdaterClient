@@ -6,6 +6,8 @@ from tools import ftp_helper
 
 import os
 import json
+import zipfile
+import shutil
 
 
 class CheckUpdate(QThread):
@@ -80,6 +82,7 @@ class CheckUpdate(QThread):
 
 class SetupUpdate(QThread):
     signal_uptodate = pyqtSignal()
+    signal_copyfile = pyqtSignal(str)
 
     def __init__(self, project_name, project_path):  # 项目名/项目路径
         super().__init__()
@@ -90,7 +93,8 @@ class SetupUpdate(QThread):
         self.wait()
 
     def run(self):
-        version_file = os.path.join(self.project_path, self.project_name)
+        # version_file = os.path.join(self.project_path, self.project_name)
+        version_file = os.path.join(self.project_path, 'version.json')
         version_file = os.path.abspath(version_file)  # 版本信息文件
 
         update_pack_path = os.path.join(self.project_path, 'update')
@@ -100,6 +104,7 @@ class SetupUpdate(QThread):
         temp_path = os.path.abspath(temp_path)  # 临时解压地址
 
         pack_list = []
+        version_dic = {}
 
         if os.path.exists(version_file):
             with open(version_file, 'r') as vf:
@@ -122,6 +127,37 @@ class SetupUpdate(QThread):
         while True:
             if len(pack_list) > 0:
                 p = pack_list.pop(0)
+                version = p
+                shutil.rmtree(temp_path)
+                os.mkdir(temp_path)
                 pack_zip = os.path.join(update_pack_path, p)
+                zp = zipfile.ZipFile(pack_zip, 'r')
+                zp.extractall(temp_path)
+                zp.close()
+
+                update_file = os.path.join(temp_path, (self.project_name + '_update.json'))
+                with open(update_file, 'r') as uf:
+                    update_json = uf.read()
+                update_dic = json.loads(update_json)
+
+                for f in update_dic:
+                    index1 = f.find('Project')  # 'Project'索引, udate_dic: D:\Project\UnigineProjects\Qt_UI_25\bin\log
+                    # .html
+                    f1 = f[index1:]
+                    origin_file = os.path.join(temp_path, f1)
+                    index2 = f.find(self.project_name)
+                    f2 = f[index2:]
+                    destination_file = os.path.join(self.project_path, f2)
+                    destination_folder = os.path.dirname(destination_file)
+                    if not os.path.exists(destination_folder):
+                        os.mkdir(destination_folder)
+                    shutil.copyfile(origin_file, destination_file)
+                    self.signal_copyfile.emit(os.path.basename(destination_file))  # 复制文件
+
+                version_dic['current_version'] = version
+                save_version_json = json.dumps(version_dic)
+                with open(version_file, 'w') as wvf:
+                    wvf.write(save_version_json)
             else:
-                self.signal_uptodate.emit()
+                self.signal_uptodate.emit()  # 已为最新版本
+                break

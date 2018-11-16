@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import zipfile
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -61,6 +62,7 @@ class MainWindow(QMainWindow):
         self.pushButton.setFixedSize(100,40)
         self.pushButton.setFont(font)
         self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(lambda: self.setup_update())
         self.pushButton.setEnabled(False)
         self.pushButton.setVisible(True)
 
@@ -102,7 +104,7 @@ class MainWindow(QMainWindow):
 
     """检查更新服务器"""
     def check_update(self):
-        self.my_check_update = Update_Helper.Check_Update(self.project_name, self.project_path)
+        self.my_check_update = Update_Helper.CheckUpdate(self.project_name, self.project_path)
         self.my_check_update.signal_server_empty.connect(self.check_update_empty)
         self.my_check_update.signal_already_down.connect(self.check_update_already)
         self.my_check_update.signal_server_out.connect(self.check_update_fail)
@@ -116,6 +118,7 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def check_update_already(self):
         self.findChild(QLabel, 'label').setText('本地更新包已为最新版本')
+        self.findChild(QPushButton, 'pushButton').setEnabled(True)
 
     @pyqtSlot()
     def check_update_fail(self):
@@ -125,28 +128,51 @@ class MainWindow(QMainWindow):
     def check_update_down(self, pack):
         self.findChild(QLabel, 'label').setText('更新包：{} 下载完成'.format(pack))
 
+    def setup_update(self):
+        self.my_setup_update = Update_Helper.SetupUpdate(self.project_name, self.project_path)
+        self.my_setup_update.signal_copyfile.connect(self.update_coping_file)
+        self.my_setup_update.signal_uptodate.connect(self.update_finish_copy)
+        self.my_setup_update.start()
+
+    @pyqtSlot(str)
+    def update_coping_file(self, coping_file):
+        self.findChild(QLabel, 'label').setText('正在更新文件：{}'.format(coping_file))
+
+    @pyqtSlot()
+    def update_finish_copy(self):
+        self.findChild(QLabel, 'label').setText('已为最新版本，可以打开三维平台')
+
 
 if __name__ == '__main__':
-    # app = QApplication(sys.argv)
-    #
-    # main_window = MainWindow()
-    # main_window.setWindowTitle('客户端启动器')
-    # main_window.setFixedSize(480, 465)
-    # main_window.show()
-    #
-    # sys.exit(app.exec_())
+    app = QApplication(sys.argv)
 
+    main_window = MainWindow()
+    main_window.setWindowTitle('客户端启动器')
+    main_window.setFixedSize(480, 465)
+    main_window.show()
+
+    sys.exit(app.exec_())
+
+    # update_pack_path = r'C:\WX_Project\update'
+    # temp_path = r'C:\WX_Project\temp'
     # project = 'Qt_UI_25'
-    # file = r'C:\WX_Project\update\Qt_UI_25_1542159836.3973486\Qt_UI_25_update.json'
+    # project_path = r'C:\WX_Project'
+    # zf = zipfile.ZipFile(r'C:\WX_Project\update\Qt_UI_25_1542159836.3973486.zip', 'r')
+    # zf.extractall(r'C:\WX_Project\temp')
+
+    # file = r'C:\WX_Project\temp\Qt_UI_25_update.json'
     # with open(file, 'r') as f:
     #     j = f.read()
     #     d = json.loads(j)
     #
     # for i in d:
-    #     print('i:', i)
-    #     print(i.split(':')[-1])
-    #     print(i.split('\\'+project+'\\')[-1])
+    #     index1 = i.find(project)
+    #     print(i)
+    #     origin = i[index1:]
+    #     print(os.path.join(temp_path, origin))
+    #     index2 = i.find(project)
+    #     destination = i[index2:]
+    #     print(os.path.join(project_path, destination))
 
-    # folder = r'D:\Project\UnigineProjects\Qt_UI_25\data\Qt_UI_25\meshes'
-    folder = r'D:\Project\UnigineProjects\Qt_UI_25\data'
-    print(folder.split('\\' + 'Qt_UI_25' + '\\'))
+    # test = 'Qt_UI_25_1542159836.3973486.zip'
+    # print(test.split('Qt_UI_25_')[-1])
