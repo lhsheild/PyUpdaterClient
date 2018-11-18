@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Py_Updater.iml" filepath="$PROJECT_DIR$/.idea/Py_Updater.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PyUpdaterClient.iml" filepath="$PROJECT_DIR$/.idea/PyUpdaterClient.iml" />
     </modules>
   </component>
 </project>

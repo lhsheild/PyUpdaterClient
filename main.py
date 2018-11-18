@@ -1,16 +1,14 @@
-import os
 import sys
-import json
-import zipfile
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from tools import ftp_helper, Update_Helper
+from ui import MainWindow
+from tool import UpdateHelper
 
 
-class MainWindow(QMainWindow):
+class MainWindow1(QMainWindow):
     def __init__(self):
         super().__init__()
         self.init_ui()
@@ -104,11 +102,11 @@ class MainWindow(QMainWindow):
 
     """检查更新服务器"""
     def check_update(self):
-        self.my_check_update = Update_Helper.CheckUpdate(self.project_name, self.project_path)
+        self.my_check_update = UpdateHelper.CheckUpdate(self.project_name, self.project_path)
         self.my_check_update.signal_server_empty.connect(self.check_update_empty)
-        self.my_check_update.signal_already_down.connect(self.check_update_already)
-        self.my_check_update.signal_server_out.connect(self.check_update_fail)
-        self.my_check_update.signal_downpack.connect(self.check_update_down)
+        self.my_check_update.signal_no_latest_pack.connect(self.check_update_already)
+        self.my_check_update.signal_server_outline.connect(self.check_update_fail)
+        self.my_check_update.signal_finish_down.connect(self.check_update_down)
         self.my_check_update.start()
 
     @pyqtSlot()
@@ -129,7 +127,7 @@ class MainWindow(QMainWindow):
         self.findChild(QLabel, 'label').setText('更新包：{} 下载完成'.format(pack))
 
     def setup_update(self):
-        self.my_setup_update = Update_Helper.SetupUpdate(self.project_name, self.project_path)
+        self.my_setup_update = UpdateHelper.SetupUpdate(self.project_name, self.project_path)
         self.my_setup_update.signal_copyfile.connect(self.update_coping_file)
         self.my_setup_update.signal_uptodate.connect(self.update_finish_copy)
         self.my_setup_update.start()
@@ -146,33 +144,9 @@ class MainWindow(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    main_window = MainWindow()
+    main_window = MainWindow.MainWindow()
     main_window.setWindowTitle('客户端启动器')
-    main_window.setFixedSize(480, 465)
+    main_window.setFixedSize(1280, 720)
     main_window.show()
 
     sys.exit(app.exec_())
-
-    # update_pack_path = r'C:\WX_Project\update'
-    # temp_path = r'C:\WX_Project\temp'
-    # project = 'Qt_UI_25'
-    # project_path = r'C:\WX_Project'
-    # zf = zipfile.ZipFile(r'C:\WX_Project\update\Qt_UI_25_1542159836.3973486.zip', 'r')
-    # zf.extractall(r'C:\WX_Project\temp')
-
-    # file = r'C:\WX_Project\temp\Qt_UI_25_update.json'
-    # with open(file, 'r') as f:
-    #     j = f.read()
-    #     d = json.loads(j)
-    #
-    # for i in d:
-    #     index1 = i.find(project)
-    #     print(i)
-    #     origin = i[index1:]
-    #     print(os.path.join(temp_path, origin))
-    #     index2 = i.find(project)
-    #     destination = i[index2:]
-    #     print(os.path.join(project_path, destination))
-
-    # test = 'Qt_UI_25_1542159836.3973486.zip'
-    # print(test.split('Qt_UI_25_')[-1])
