@@ -2,7 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-from tools import ftp_helper
+from tool import FTPHelper
 
 import os
 import json
@@ -12,9 +12,9 @@ import shutil
 
 class CheckUpdate(QThread):
     signal_server_empty = pyqtSignal()
-    signal_already_down = pyqtSignal()
-    signal_server_out = pyqtSignal()
-    signal_downpack = pyqtSignal(str)
+    signal_no_latest_pack = pyqtSignal()
+    signal_server_outline = pyqtSignal()
+    signal_finish_down = pyqtSignal(str)
 
     def __init__(self, project_name, project_path):  # 项目名/项目路径
         super().__init__()
@@ -33,7 +33,7 @@ class CheckUpdate(QThread):
         while True:
             if not os.listdir(update_pack_path):
                 print('empty')
-                my_ftp = ftp_helper.MyFtp()
+                my_ftp = FTPHelper.MyFtp('192.168.8.171', 21, 'Administrator', 'Gut102015')
                 if my_ftp.ftp_login() == 1000:
                     file_list = my_ftp.ftp_getfiles()
                     for i in file_list:
@@ -46,9 +46,9 @@ class CheckUpdate(QThread):
                         file_list.sort()
                         update_pack = file_list[0]
                         if my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack))) == 1000:
-                            self.signal_downpack.emit(update_pack)  # 下载更新包：update_pack 完成
+                            self.signal_finish_down.emit(update_pack)  # 下载更新包：update_pack 完成
                 else:
-                    self.signal_server_out.emit()
+                    self.signal_server_outline.emit()
 
             else:
                 print('not empty')
@@ -57,7 +57,7 @@ class CheckUpdate(QThread):
                     pack_list.append(a)
                 pack_list.sort()
                 pack = pack_list[-1]
-                my_ftp = ftp_helper.MyFtp()
+                my_ftp = FTPHelper.MyFtp('192.168.8.171', 21, 'Administrator', 'Gut102015')
                 if my_ftp.ftp_login() == 1000:
                     file_list = my_ftp.ftp_getfiles()
                     for j in file_list:
@@ -70,14 +70,14 @@ class CheckUpdate(QThread):
                         file_list.sort()
                         temp = file_list.index(pack)
                         if file_list[temp] == file_list[-1]:
-                            self.signal_already_down.emit()  # 服务器上没有新的更新包
+                            self.signal_no_latest_pack.emit()  # 服务器上没有新的更新包
                             break
                         else:
                             update_pack = file_list[temp + 1]
                             if my_ftp.download_file(update_pack, (os.path.join(update_pack_path, update_pack))) == 1000:
-                                self.signal_downpack.emit(update_pack)  # 下载更新包：update_pack 完成
+                                self.signal_finish_down.emit(update_pack)  # 下载更新包：update_pack 完成
                 else:
-                    self.signal_server_out.emit()
+                    self.signal_server_outline.emit()
 
 
 class SetupUpdate(QThread):

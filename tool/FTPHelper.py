@@ -8,18 +8,22 @@ CONST_BUFFER_SIZE = 8192
 
 
 class MyFtp(ftplib.FTP):
-    def __init__(self):
+    def __init__(self, ftp_host, ftp_port, ftp_username, ftp_password):
         super().__init__()
         self.encoding = 'GBK'
+        self.ftp_host = ftp_host
+        self.ftp_port = ftp_port
+        self.ftp_username = ftp_username
+        self.ftp_password = ftp_password
 
-    def ftp_login(self, ftp_host=CONST_HOST, ftp_port=21, ftp_username=CONST_USERNAME, ftp_password=CONST_PWD):
+    def ftp_login(self):
         try:
-            self.connect(ftp_host, ftp_port, 2)
+            self.connect(self.ftp_host, self.ftp_port, 3)
             print(self.welcome)
         except Exception as e:
             print('连接失败：', e)
         try:
-            self.login(ftp_username, ftp_password)
+            self.login(self.ftp_username, self.ftp_password)
             print('已登录FTP服务器')
             return 1000
         except Exception as e:
@@ -42,9 +46,9 @@ class MyFtp(ftplib.FTP):
 
     def upload_file(self, remote_path, local_path):
         try:
-            bufsize = 1024
+            buf_size = 8192
             fp = open(local_path, 'rb')
-            self.storbinary('STOR ' + remote_path, fp, bufsize)
+            self.storbinary('STOR ' + remote_path, fp, buf_size)
             self.set_debuglevel(0)
             fp.close()
             self.quit()
@@ -52,7 +56,6 @@ class MyFtp(ftplib.FTP):
         except Exception as e:
             print('上传失败：', e)
             return 1001
-
 
     def download_file(self, remote_path, local_path):
         """
@@ -64,7 +67,7 @@ class MyFtp(ftplib.FTP):
         print("start download file by use FTP...")
         try:
             handle = open(local_path, "wb")
-            self.retrbinary("RETR %s" % remote_path, handle.write, 1024)
+            self.retrbinary("RETR %s" % remote_path, handle.write, 8192)
             handle.close()
             self.quit()
             return 1000

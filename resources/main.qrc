@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="新前缀">
-    <file>00007BF3.png</file>
-    <file>世界地图.jpg</file>
-  </qresource>
-</RCC>
