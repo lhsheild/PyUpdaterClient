@@ -1,5 +1,4 @@
 import ftplib
-import os
 
 CONST_HOST = "192.168.0.176"
 CONST_USERNAME = "Administrator"
