@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         self.center_widget = QWidget()
         self.setCentralWidget(self.center_widget)
 
-        self.setWindowIcon(QIcon(':/resource/a.jpg'))
+        self.setWindowIcon(QIcon(':/resource/a.png'))
         self.setWindowTitle('三维平台启动器')
 
         self.update_button = self.update_button_init()
@@ -55,10 +55,10 @@ class MainWindow(QMainWindow):
         if os.path.exists('setting.json'):
             with open('setting.json', 'r') as sf:
                 setting_json = sf.read()
-                self.setting_dic = json.loads(setting_json)
-                self.project_name = self.setting_dic['project_name']
-                self.project_path = self.setting_dic['project_path']
-                self.exe_path = self.setting_dic['exe_path']
+            self.setting_dic = json.loads(setting_json)
+            self.project_name = self.setting_dic['project_name']
+            self.project_path = self.setting_dic['project_path']
+            self.exe_path = self.setting_dic['exe_path']
         else:
             project_folder = QFileDialog.getExistingDirectory(self, '选择项目所在路径')
             if os.path.exists(project_folder):
@@ -213,5 +213,10 @@ class MainWindow(QMainWindow):
 
     '''启动按钮'''
     def lauch_app(self):
-        win32api.ShellExecute(0, 'open', self.exe_path, '', '', 1)
+        os.chdir(os.path.join(os.path.join(self.project_path, self.project_name), 'data'))
+        # os.chdir(os.path.join(self.project_path, self.project_name))
+        os.popen(self.exe_path)
+        # subprocess.getstatusoutput(self.exe_path)
+        # win32api.ShellExecute(0, 'open', self.exe_path, '', '', 1)
+        # os.system(self.exe_path)
         # sys.exit(0)
